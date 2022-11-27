@@ -1,0 +1,103 @@
+---
+title: "statpro"
+author: "M.Arya Septa K"
+date: '2022-11-11'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+### Input data
+```{r}
+library(xlsx)
+data <- read.xlsx("D:/STIS/Semester 7/1.Statistik Produksi/UAS/Tugas Akhir/data.xlsx",sheetName = "Sheet1")
+head(data)
+```
+
+```{r}
+df = as.data.frame(data[-1:-2])
+rownames(df) = c(data$No)
+head(df)
+
+```
+
+### Lakukan Standarisasi
+```{r}
+df_scale =(df)
+head(df_scale)
+```
+
+
+### K-Means
+
+```{r}
+library(factoextra)
+fviz_nbclust(df_scale, kmeans, method = "gap_stat")
+```
+
+
+Kesimpulan: Dari hasil diatas,dapat dilihat bahwa dan k=3 memiliki gapstatistic yang optimal
+
+
+### K=3
+```{r}
+set.seed(15)
+km.res =  eclust(df_scale, "kmeans", k = 3, nstart = 25,
+graph = FALSE)
+
+```
+
+```{r}
+fviz_cluster(km.res,df,ellipse.type = "convex")
+```
+```{r}
+aggregate(df,by = list(cluster=km.res2$cluster),mean)
+```
+
+
+```{r}
+d = dist(df_scale,method = "euclidean")
+require("cluster")
+
+sil <- silhouette(km.res2$cluster, d)
+fviz_silhouette(sil)
+```
+
+
+### Nilai silhouette
+```{r}
+silinfo <- km.res2$silinfo
+names(silinfo)
+
+# Silhouette widths of each observation
+head(silinfo$widths[, 1:3])
+```
+Kesimpulan :
+
+-Nilai silhouette mendekati 1-> observasi terkelompok dengan baik
+
+-Nilai silhouette mendekati 0-> observasi terletak antar dua cluster
+
+-Nilai silhouette mendekati nilai negatif-> kemungkinan observasi di tempatkan di cluster yang salah
+
+### Negative silhouette
+```{r}
+# Objects with negative silhouette
+neg_sil_index <- which(sil[, 'sil_width'] < 0)
+sil[neg_sil_index, , drop = FALSE]
+```
+
+Kesimpulan: 
+
+tidak terdapat observasi yang teridentifikasi salah cluster
+
+
+Sebaran Data untuk k=3
+```{r}
+# append cluster assignment
+k3 <- data.frame(df, km.res2$cluster)
+k3
+```
